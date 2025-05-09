@@ -5,31 +5,30 @@ using System;
 
 public class PlayerManager : MonoBehaviour
 {
-    public float walkSpeed = 5f; // Yürüme hýzý
-    public float runSpeed = 10f; // Koþma hýzý
-    [SerializeField] private float maxHealth = 100f; // Maksimum can
-    private float playerHealth; // Mevcut can
-    private Rigidbody _rb; // Oyuncunun fiziksel gövdesi
-    private Vector3 moveDirection; // Hareket yönü
-    private float currentSpeed; // Mevcut hýz
+    public float walkSpeed = 5f;
+    public float runSpeed = 10f;
+    [SerializeField] private float maxHealth = 100f;
+    private float playerHealth;
+    private Rigidbody _rb;
+    private Vector3 moveDirection;
+    private float currentSpeed;
 
-    [SerializeField] private GoldManager goldManager; // Altýn yönetimi
-    [SerializeField] private float _jumpForce; // Zýplama kuvveti
-    [SerializeField] private bool _canJump; // Zýplama izni
-    [SerializeField] private float _jumpCoolDown; // Zýplama bekleme süresi
-    [SerializeField] private float _playerHeight; // Oyuncu yüksekliði
-    [SerializeField] private LayerMask _groundLayer; // Zemin katmaný
-    [SerializeField] private HintDoorManager hintDoorManager; // Ýpucu kapý yönetimi
-    [SerializeField] private UIManager uiManager; // UI yönetimi
-    [SerializeField] private Transform cameraTransform; // Kamera transformu
+    [SerializeField] private GoldManager goldManager;
+    [SerializeField] private float _jumpForce;
+    [SerializeField] private bool _canJump;
+    [SerializeField] private float _jumpCoolDown;
+    [SerializeField] private float _playerHeight;
+    [SerializeField] private LayerMask _groundLayer;
+    [SerializeField] private HintDoorManager hintDoorManager;
+    [SerializeField] private UIManager uiManager;
+    [SerializeField] private Transform cameraTransform;
+    [SerializeField] private float fallThresholdY = -10f; // Yeni: Düþme sýnýrý
 
-    // Saldýrý için menzil ve hasar
-    [SerializeField] private float attackRange = 2f; // Saldýrý menzili
-    [SerializeField] private float attackDamage = 20f; // Saldýrý hasarý
+    [SerializeField] private float attackRange = 2f;
+    [SerializeField] private float attackDamage = 20f;
 
-    public Animator animator; // Oyuncu animatörü
+    public Animator animator;
 
-    // Animasyon hash ID'leri
     private int idleAnimID;
     private int walkAnimID;
     private int runAnimID;
@@ -39,13 +38,11 @@ public class PlayerManager : MonoBehaviour
     private int punchAnimID;
     private int deathID;
 
-    // Durum deðiþkenleri
-    private bool isJumping; // Zýplýyor mu?
-    private bool isAttacking; // Saldýrýyor mu?
-    private bool isTakingDamage; // Hasar alýyor mu?
-    private bool isDead; // Öldü mü?
+    private bool isJumping;
+    private bool isAttacking;
+    private bool isTakingDamage;
+    private bool isDead;
 
-    // Oyuncunun öldüðünü bildiren event
     public static event Action OnPlayerDied;
 
     private void Awake()
@@ -61,11 +58,10 @@ public class PlayerManager : MonoBehaviour
             }
         }
 
-        playerHealth = maxHealth; // Caný baþlangýçta tam doldur
-        isDead = false; // Oyuncu baþlangýçta canlý
-        _canJump = true; // Zýplama izni baþlangýçta açýk
+        playerHealth = maxHealth;
+        isDead = false;
+        _canJump = true;
 
-        // Animasyon hash ID'lerini al
         idleAnimID = Animator.StringToHash("Idle");
         walkAnimID = Animator.StringToHash("Walk");
         runAnimID = Animator.StringToHash("Run");
@@ -78,18 +74,27 @@ public class PlayerManager : MonoBehaviour
 
     private void Start()
     {
-        UpdateHealthUI(); // UI'da caný güncelle
+        UpdateHealthUI();
     }
 
     private void Update()
     {
-        if (isDead) return; // Oyuncu öldüyse input alma
+        if (isDead) return;
+
+        // Düþme kontrolü
+        if (transform.position.y < fallThresholdY)
+        {
+            TakeDamage(maxHealth);
+            Debug.Log($"Oyuncu y={transform.position.y} ile düþtü, GameOver!");
+            return;
+        }
+
         SetInputs();
     }
 
     private void FixedUpdate()
     {
-        if (isDead) return; // Oyuncu öldüyse hareket etme
+        if (isDead) return;
         SetPlayerMovement();
     }
 
@@ -118,7 +123,6 @@ public class PlayerManager : MonoBehaviour
         bool isMoving = moveDirection.magnitude > 0.1f;
         bool isGrounded = IsGrounded();
 
-        // Hareket yönünü güncelle (havadayken de çalýþsýn)
         if (isMoving)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
@@ -138,23 +142,22 @@ public class PlayerManager : MonoBehaviour
             currentSpeed = 0f;
         }
 
-        // Öncelik 1: Saldýrý durumu (Q ve E tuþlarý)
         if (Input.GetKeyDown(KeyCode.Q) && isGrounded)
         {
             isAttacking = true;
-            isTakingDamage = false; // Hasar animasyonu kesiliyor
-            isJumping = false; // Zýplama kesiliyor
+            isTakingDamage = false;
+            isJumping = false;
             animator.Play(punchAnimID);
-            AttackEnemy(); // Düþmana hasar ver
+            AttackEnemy();
             return;
         }
         else if (Input.GetKeyDown(KeyCode.E) && isGrounded)
         {
             isAttacking = true;
-            isTakingDamage = false; // Hasar animasyonu kesiliyor
-            isJumping = false; // Zýplama kesiliyor
+            isTakingDamage = false;
+            isJumping = false;
             animator.Play(kickAnimID);
-            AttackEnemy(); // Düþmana hasar ver
+            AttackEnemy();
             return;
         }
 
@@ -169,7 +172,6 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        // Öncelik 2: Hasar alma durumu
         if (isTakingDamage)
         {
             AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
@@ -181,7 +183,6 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        // Öncelik 3: Zýplama durumu
         if (isJumping)
         {
             if (isGrounded && _rb.linearVelocity.y <= 0)
@@ -192,7 +193,6 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        // Yeni giriþ: Zýplama
         if (Input.GetKey(KeyCode.Space) && _canJump && isGrounded)
         {
             _canJump = false;
@@ -203,13 +203,11 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        // Normal hareket durumu
         UpdateMovementAnimation(isMoving, isGrounded);
     }
 
     private void AttackEnemy()
     {
-        // Sahnedeki tüm düþmanlarý bul
         EnemyManager[] enemies = FindObjectsByType<EnemyManager>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         foreach (EnemyManager enemy in enemies)
         {
@@ -225,7 +223,7 @@ public class PlayerManager : MonoBehaviour
     {
         if (!isGrounded || isJumping || isAttacking || isTakingDamage)
         {
-            return; // Havadayken, saldýrý veya hasar alma sýrasýnda hareket animasyonlarýný deðiþtirme
+            return;
         }
 
         if (isMoving)
@@ -277,11 +275,11 @@ public class PlayerManager : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isDead) return; // Ölü oyuncunun çarpýþmalarý dikkate alýnmaz
+        if (isDead) return;
         if (other.CompareTag("Gold"))
         {
             other.gameObject.SetActive(false);
-            if(goldManager!=null)
+            if (goldManager != null)
             {
                 goldManager.AddGold(10);
             }
@@ -294,7 +292,7 @@ public class PlayerManager : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (isDead) return; // Ölü oyuncunun çarpýþmalarý dikkate alýnmaz
+        if (isDead) return;
         if (collision.collider.CompareTag("HintDoor"))
         {
             hintDoorManager.ChangeColorAndOpenWay();
@@ -303,16 +301,15 @@ public class PlayerManager : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        if (isDead) return; // Ölü oyuncuya hasar verme
+        if (isDead) return;
 
         playerHealth -= damage;
         playerHealth = Mathf.Max(playerHealth, 0);
 
-        // Eðer saldýrý animasyonu oynuyorsa, hasar animasyonunu oynatma
         if (!isAttacking && playerHealth > 0)
         {
             isTakingDamage = true;
-            isJumping = false; // Zýplama kesiliyor
+            isJumping = false;
             animator.Play(takeDamageAnimID);
         }
 
@@ -321,60 +318,50 @@ public class PlayerManager : MonoBehaviour
 
         if (playerHealth <= 0)
         {
-            Die(); // Ölüm metodunu çaðýr
+            Die();
         }
     }
 
     private void UpdateHealthUI()
     {
-        uiManager.UpdateHealthText(playerHealth); // Can UI'sini güncelle
+        uiManager.UpdateHealthText(playerHealth);
     }
 
     private void Die()
     {
-        if (isDead) return; // Zaten öldüyse tekrar çalýþtýrma
+        if (isDead) return;
         isDead = true;
 
         Debug.Log("OYUNCU ÖLDÜ!");
 
-        // Tüm durumlarý sýfýrla
         isAttacking = false;
         isJumping = false;
         isTakingDamage = false;
         currentSpeed = 0f;
         moveDirection = Vector3.zero;
 
-        // Fiziksel hareketleri durdur
         _rb.linearVelocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
-        _rb.isKinematic = true; // Fiziksel etkileþimleri kapat
+        _rb.isKinematic = true;
 
-        // Ölüm animasyonunu oynat
         animator.Play(deathID);
 
-        // Düþmanlara oyuncunun öldüðünü bildir
         OnPlayerDied?.Invoke();
 
-        // Ölüm animasyonu bittikten sonra eylemleri baþlat
         StartCoroutine(HandleDeathAnimation());
     }
 
     private IEnumerator HandleDeathAnimation()
     {
-        // Sabit 3 saniye bekle (ölüm animasyonu için yeterli)
-        yield return new WaitForSecondsRealtime(3f);
-
-        // GameOver ekranýný göster
+        yield return new WaitForSecondsRealtime(6f);
         uiManager.ShowGameOverScreen();
     }
 
-    // EnemyManager için eklenen getter (isteðe baðlý, artýk event kullanýyoruz)
     public bool IsDead()
     {
         return isDead;
     }
 
-    // Saldýrý menzilini görselleþtirmek için
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
