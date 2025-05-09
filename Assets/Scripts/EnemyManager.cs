@@ -13,7 +13,6 @@ public class EnemyManager : MonoBehaviour
     [SerializeField] private float damage = 10f; // Verilen hasar
     [SerializeField] private float moveSpeed = 2.5f; // Hareket hýzý
     [SerializeField] private float maxHealth = 100f; // Enemy'nin caný
-    [SerializeField] private float playerDamage = 20f; // Oyuncunun verdiði hasar
     [SerializeField] private float knockbackDistance = 0.5f; // Geri savrulma mesafesi 
     [SerializeField] private float knockbackDuration = 0.2f; // Geri savrulma süresi 
 
@@ -78,13 +77,7 @@ public class EnemyManager : MonoBehaviour
             healthBarSlider.maxValue = 1;
             UpdateHealthBar(); // Can barýný baþlangýçta tam dolu yap
         }
-        else
-        {
-            Debug.LogError("Health bar slider not assigned on " + gameObject.name);
-        }
-
-        if (healthBarTransform == null)
-            Debug.LogError("Health bar transform not assigned on " + gameObject.name);
+       
     }
 
     private void Update()

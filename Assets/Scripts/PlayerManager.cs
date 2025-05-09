@@ -361,14 +361,11 @@ public class PlayerManager : MonoBehaviour
 
     private IEnumerator HandleDeathAnimation()
     {
-        // Ölüm animasyonunun süresini al
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        yield return new WaitForSecondsRealtime(stateInfo.length);
+        // Sabit 3 saniye bekle (ölüm animasyonu için yeterli)
+        yield return new WaitForSecondsRealtime(3f);
 
-        // Animasyon bitti, oyun bitti ekranýný göster
-        uiManager.ShowGameOverScreen(); // UIManager'da oyun bitti ekranýný göster
-        // Alternatif: Sahneyi yeniden yüklemek için
-        // UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        // GameOver ekranýný göster
+        uiManager.ShowGameOverScreen();
     }
 
     // EnemyManager için eklenen getter (isteðe baðlý, artýk event kullanýyoruz)
