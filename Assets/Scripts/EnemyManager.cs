@@ -20,6 +20,9 @@ public class EnemyManager : MonoBehaviour
     [SerializeField] private Slider healthBarSlider; // Can barý olarak Slider
     [SerializeField] private Transform healthBarTransform; // Can barýnýn transform'u (Canvas)
 
+    //Event eklicez Skor artmasý için Enemy ölümünden sonra
+    public static event System.Action OnEnemyDied;
+
     private NavMeshAgent agent;
     private float lastAttackTime;
     private bool isPlayerInRange;
@@ -230,6 +233,7 @@ public class EnemyManager : MonoBehaviour
         isDead = true; // Ölü durumu aktif
         agent.isStopped = true; // Hareketi durdur
         animator.Play(deathID);
+        OnEnemyDied?.Invoke(); // skor için event tetikle
         Debug.Log("Enemy died!");
 
         // Zombie Death animasyonunun süresi kadar bekle ve objeyi yok et

@@ -1,22 +1,25 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // Sahne yönetimi için
 
 public class UIManager : MonoBehaviour
 {
-    [SerializeField] private Slider volumeSlider; // Ses kaydýrýcýsý
-    [SerializeField] private TextMeshProUGUI playerHealth; // Oyuncu can metni
-    [SerializeField] private TextMeshProUGUI goldText; // Altýn metni
-    [SerializeField] private PlayerManager playerManager; // Oyuncu yöneticisi
-    [SerializeField] private GameObject gameOverPanel; // Oyun bitti paneli
+    
+    [SerializeField] private TextMeshProUGUI playerHealth;
+    [SerializeField] private TextMeshProUGUI goldText;
+    [SerializeField] private TextMeshProUGUI scoreText; // Yeni
+    [SerializeField] private PlayerManager playerManager;
+    [SerializeField] private GameObject gameOverPanel;
+
     private BackgroundMusicManager musicManager;
-    private GoldManager goldManager; 
+    private GoldManager goldManager;
+    private int score; // Yeni
 
     private void Awake()
     {
-        musicManager = Object.FindFirstObjectByType<BackgroundMusicManager>(); // Arka plan müzik yöneticisini bul
+        musicManager = Object.FindFirstObjectByType<BackgroundMusicManager>();
         if (musicManager == null)
         {
             Debug.LogError("UIManager: BackgroundMusicManager bulunamadý!");
@@ -29,11 +32,6 @@ public class UIManager : MonoBehaviour
             Debug.LogError("UIManager: GoldManager bulunamadý!");
         }
 
-        if (volumeSlider == null)
-        {
-            Debug.LogError("UIManager: Volume Slider atanmamýþ!");
-            return;
-        }
 
         if (playerHealth == null)
         {
@@ -44,61 +42,86 @@ public class UIManager : MonoBehaviour
         if (goldText == null)
         {
             Debug.LogError("UIManager: GoldText TextMeshProUGUI atanmamýþ!");
+            return;
+        }
+
+        if (scoreText == null)
+        {
+            Debug.LogError("UIManager: ScoreText TextMeshProUGUI atanmamýþ!");
+            return;
         }
 
         if (gameOverPanel == null)
         {
-            Debug.LogError("UIManager: GameOverPanel atanmamýþ!!!");
+            Debug.LogError("UIManager: GameOverPanel atanmamýþ!");
             return;
         }
     }
 
     private void OnEnable()
     {
-        // GoldManager’ýn event’ine abone ol
         if (goldManager != null)
         {
             GoldManager.OnGoldChanged += UpdateGoldText;
         }
+        PlayerManager.OnPlayerDied += HandlePlayerDeath; // Yeni
+        EnemyManager.OnEnemyDied += IncrementScore; // Yeni
     }
 
     private void OnDisable()
     {
-        // Event aboneliðini kaldýr
         if (goldManager != null)
         {
             GoldManager.OnGoldChanged -= UpdateGoldText;
         }
+        PlayerManager.OnPlayerDied -= HandlePlayerDeath; // Yeni
+        EnemyManager.OnEnemyDied -= IncrementScore; // Yeni
     }
 
     private void Start()
     {
-        volumeSlider.value = 0.5f; // Varsayýlan ses seviyesi
-        volumeSlider.onValueChanged.AddListener(SetMusicVolume);
-        gameOverPanel.SetActive(false); // Oyun bitti panelini baþlangýçta gizle
+        gameOverPanel.SetActive(false);
 
-        // Baþlangýç altýn miktarýný göster
         if (goldManager != null && goldText != null)
         {
             UpdateGoldText(goldManager.GetGold());
         }
+
+        score = 0;
+        UpdateScoreText();
     }
 
     private void Update()
     {
-        // Fare Slider üzerinde deðilse ve sol tuþ býrakýlmýþsa, EventSystem'den seçimi kaldýr
         if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             EventSystem.current.SetSelectedGameObject(null);
         }
     }
 
-    private void SetMusicVolume(float volume)
+   
+
+    private void IncrementScore()
     {
-        if (musicManager != null)
+        score+=100;
+        UpdateScoreText();
+        Debug.Log($"Skor artýrýldý: {score}");
+    }
+
+    private void UpdateScoreText()
+    {
+        if (scoreText != null)
         {
-            musicManager.SetVolume(volume);
+            scoreText.text = $"Skor: {score}";
         }
+    }
+
+    private void HandlePlayerDeath()
+    {
+        string username = PlayerPrefs.GetString("LastUsername", "Player");
+        Debug.Log($"Skor kaydediliyor: {username} - {score}");
+        MainMenuManager.SaveHighScore(username, score);
+        ShowGameOverScreen();
     }
 
     public void UpdateHealthText(float health)
@@ -119,13 +142,13 @@ public class UIManager : MonoBehaviour
 
     public void ShowGameOverScreen()
     {
-        gameOverPanel.SetActive(true); // Oyun bitti panelini göster
-        Time.timeScale = 0f; // Oyunu duraklat
+        gameOverPanel.SetActive(true);
+        Time.timeScale = 0f;
     }
 
     public void RestartGame()
     {
-        Debug.Log($"RestartGame çaðrýldý, Time.timeScale: {Time.timeScale}, Yükleniyor: SampleScene");
+        Debug.Log($"RestartGame çaðrýldý, Time.timeScale: {Time.timeScale}");
         Time.timeScale = 1f;
         try
         {
@@ -139,7 +162,8 @@ public class UIManager : MonoBehaviour
 
     public void GoToMainMenu()
     {
-        Time.timeScale = 1f; // Zaman akýþýný normale döndür
-        SceneManager.LoadScene("MainMenu"); // Ana menü sahnesine geçiþ
+        Debug.Log("MainMenu’ya geçiliyor...");
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 }
