@@ -39,11 +39,6 @@ public class UIManager : MonoBehaviour
             Debug.LogError("UIManager: GoldManager bulunamadý!");
         }
 
-        if (volumeSlider == null)
-        {
-            Debug.LogError("UIManager: Volume Slider atanmamýþ!");
-            return;
-        }
 
         if (playerHealth == null)
         {
@@ -134,7 +129,6 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         
-        volumeSlider.onValueChanged.AddListener(SetMusicVolume);
         gameOverPanel.SetActive(false);
         pausePanel.SetActive(false);
         pauseButton.onClick.AddListener(PauseGame);

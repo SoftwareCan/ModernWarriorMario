@@ -1,8 +1,8 @@
+using DG.Tweening;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class EnemyManager : MonoBehaviour
 {
@@ -15,12 +15,13 @@ public class EnemyManager : MonoBehaviour
     [SerializeField] private float maxHealth = 100f; // Enemy'nin caný
     [SerializeField] private float knockbackDistance = 0.5f; // Geri savrulma mesafesi 
     [SerializeField] private float knockbackDuration = 0.2f; // Geri savrulma süresi 
+    [SerializeField] private float activationDistance = 15f; // Zombinin aktif olacaðý mesafe
 
     // Can barý için (Slider ile)
     [SerializeField] private Slider healthBarSlider; // Can barý olarak Slider
     [SerializeField] private Transform healthBarTransform; // Can barýnýn transform'u (Canvas)
 
-    //Event eklicez Skor artmasý için Enemy ölümünden sonra
+    // Event eklicez Skor artmasý için Enemy ölümünden sonra
     public static event System.Action OnEnemyDied;
 
     private NavMeshAgent agent;
@@ -35,12 +36,15 @@ public class EnemyManager : MonoBehaviour
     private int punchAnimID;
     private int takeDamageAnimID;
     private int deathID;
+    private int spawnAnimID;
 
     // Durum deðiþkenleri
     private bool isAttacking;
     private bool isTakingDamage;
     private bool isDead; // Düþmanýn ölüm durumu
     private bool isKnockedBack; // Geri savrulma durumu 
+    private bool isSpawned; // Spawn animasyonu oynuyor mu?
+    private bool isActive; // Zombi aktif mi?
 
     private Camera mainCamera;
 
@@ -51,20 +55,13 @@ public class EnemyManager : MonoBehaviour
         agent.speed = moveSpeed;
         agent.stoppingDistance = stoppingDistance;
 
-        // Oyuncuyu bul
-        if (player == null)
-        {
-            player = Object.FindFirstObjectByType<PlayerManager>().transform;
-            if (player == null)
-                Debug.LogError("Player not found!");
-        }
-
         // Animasyon hash ID'lerini al
         idleAnimID = Animator.StringToHash("Idle");
         walkAnimID = Animator.StringToHash("Walk");
         punchAnimID = Animator.StringToHash("Punch");
         takeDamageAnimID = Animator.StringToHash("TakeDamage");
         deathID = Animator.StringToHash("Zombie Death");
+        spawnAnimID = Animator.StringToHash("Spawn");
 
         health = maxHealth;
 
@@ -80,12 +77,36 @@ public class EnemyManager : MonoBehaviour
             healthBarSlider.maxValue = 1;
             UpdateHealthBar(); // Can barýný baþlangýçta tam dolu yap
         }
-       
     }
 
     private void Update()
     {
-        if (isDead) return; // Ölü ise güncelleme yapma
+        if (isDead) return;
+
+        // Spawn animasyonu oynuyorsa bekle
+        if (isSpawned)
+        {
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.shortNameHash == spawnAnimID && stateInfo.normalizedTime >= 1f)
+            {
+                isSpawned = false;
+                Debug.Log($"Spawn animation finished for zombie: {gameObject.name}");
+            }
+            return;
+        }
+
+        // Zombi aktif deðilse ve oyuncu yakýnsa aktif et
+        if (!isActive && player != null)
+        {
+            float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+            Debug.Log($"Zombie {gameObject.name} checking activation: Distance to player = {distanceToPlayer}, Activation Distance = {activationDistance}");
+            if (distanceToPlayer <= activationDistance)
+            {
+                Activate();
+            }
+            return;
+        }
+
         UpdateEnemyState();
     }
 
@@ -96,6 +117,49 @@ public class EnemyManager : MonoBehaviour
         {
             healthBarTransform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
         }
+    }
+
+    public void SetPlayer(Transform newPlayer)
+    {
+        player = newPlayer;
+        Debug.Log($"Player set for zombie: {gameObject.name}, Player: {player}");
+    }
+
+    public void PlaySpawnAnimation()
+    {
+        isSpawned = true;
+        if (agent != null)
+        {
+            agent.enabled = false; // Spawn sýrasýnda hareket etme
+        }
+        // Animasyon varsa oynat
+        if (animator.HasState(0, spawnAnimID))
+        {
+            animator.Play(spawnAnimID);
+            Debug.Log($"Playing spawn animation for zombie: {gameObject.name}");
+        }
+        else
+        {
+            isSpawned = false; // Animasyon yoksa hemen aktif ol
+            Debug.LogWarning($"Spawn animasyonu bulunamadý for zombie: {gameObject.name}");
+        }
+    }
+
+    public void Activate()
+    {
+        if (agent == null)
+        {
+            Debug.LogError("NavMeshAgent is null on zombie: " + gameObject.name);
+            return;
+        }
+        isActive = true;
+        agent.enabled = true; // Hareketi baþlat
+        Debug.Log($"Zombie {gameObject.name} activated. Agent enabled: {agent.enabled}, Player: {player}");
+    }
+
+    public bool IsSpawning()
+    {
+        return isSpawned;
     }
 
     private void UpdateEnemyState()
@@ -135,15 +199,22 @@ public class EnemyManager : MonoBehaviour
 
     private void UpdateEnemyBehavior(float distanceToPlayer)
     {
+        
         if (isPlayerInRange)
         {
-            agent.isStopped = true;
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+            }
             TryAttack();
         }
         else
         {
-            agent.isStopped = false;
-            agent.SetDestination(player.position);
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(player.position);
+            }
             animator.Play(walkAnimID);
         }
     }
@@ -165,7 +236,7 @@ public class EnemyManager : MonoBehaviour
         if (playerManager != null)
         {
             playerManager.TakeDamage(damage);
-            Debug.Log($"Düþman oyuncuya {damage} hasar verdi!");
+            Debug.Log($"Düþman oyuncuya {damage} hasar verdi! Zombie: {gameObject.name}");
         }
     }
 
@@ -182,7 +253,7 @@ public class EnemyManager : MonoBehaviour
 
         UpdateHealthBar(); // Can barýný güncelle
 
-        // Geri savrulma efektini baþlat (yeni)
+        // Geri savrulma efektini baþlat
         if (!isDead) // Ölü deðilse geri savrul
         {
             ApplyKnockback();
@@ -200,7 +271,10 @@ public class EnemyManager : MonoBehaviour
         isKnockedBack = true;
 
         // NavMeshAgent'ý geçici olarak devre dýþý býrak
-        agent.enabled = false;
+        if (agent != null && agent.enabled)
+        {
+            agent.enabled = false;
+        }
 
         // Geri savrulma yönü: düþmandan oyuncuya ters yönde
         Vector3 knockbackDirection = (transform.position - player.position).normalized;
@@ -213,7 +287,10 @@ public class EnemyManager : MonoBehaviour
             .OnComplete(() =>
             {
                 // Savrulma bitti, NavMeshAgent'ý geri aç
-                agent.enabled = true;
+                if (agent != null && !isDead)
+                {
+                    agent.enabled = true;
+                }
                 isKnockedBack = false;
             });
     }
@@ -230,15 +307,19 @@ public class EnemyManager : MonoBehaviour
 
     private void Die()
     {
-        isDead = true; // Ölü durumu aktif
-        agent.isStopped = true; // Hareketi durdur
+        isDead = true;
+        // NavMeshAgent aktifse durdur, deðilse hata vermesin
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+        }
         animator.Play(deathID);
-        OnEnemyDied?.Invoke(); // skor için event tetikle
-        Debug.Log("Enemy died!");
+        OnEnemyDied?.Invoke();
+        Debug.Log("Enemy died: " + gameObject.name);
 
         // Zombie Death animasyonunun süresi kadar bekle ve objeyi yok et
         AnimatorStateInfo deathStateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        float deathAnimLength = deathStateInfo.length; // Animasyonun süresi
+        float deathAnimLength = deathStateInfo.length;
         Invoke(nameof(DestroyEnemy), deathAnimLength);
     }
 

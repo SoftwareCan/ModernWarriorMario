@@ -208,11 +208,11 @@ public class PlayerManager : MonoBehaviour
 
     private void AttackEnemy()
     {
-        EnemyManager[] enemies = FindObjectsByType<EnemyManager>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        foreach (EnemyManager enemy in enemies)
+        Collider[] hits = Physics.OverlapSphere(transform.position, attackRange);
+        foreach (var hit in hits)
         {
-            float distanceToEnemy = Vector3.Distance(transform.position, enemy.transform.position);
-            if (distanceToEnemy <= attackRange)
+            EnemyManager enemy = hit.GetComponent<EnemyManager>();
+            if (enemy != null)
             {
                 enemy.TakeDamage(attackDamage);
             }
