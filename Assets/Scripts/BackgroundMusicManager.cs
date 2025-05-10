@@ -2,41 +2,47 @@ using UnityEngine;
 
 public class BackgroundMusicManager : MonoBehaviour
 {
-    private static BackgroundMusicManager instance;
     private AudioSource audioSource;
 
     private void Awake()
     {
-        // Singleton kontrolü: Sadece bir tane BackgroundMusicManager olsun
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject); // Obje sahneler arasýnda yok olmasýn
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        // AudioSource bileþenini al
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
-            Debug.LogError("BackgroundMusicManager: AudioSource bileþeni eksik!");
+            Debug.LogError("BackgroundMusicManager: AudioSource bulunamadý!");
         }
-        else if (audioSource.clip == null)
-        {
-            Debug.LogError("BackgroundMusicManager: AudioClip atanmamýþ!");
-        }
+        Debug.Log($"AudioSource: {audioSource}, Clip: {audioSource?.clip}");
     }
 
-    // Ses seviyesini ayarla
     public void SetVolume(float volume)
     {
         if (audioSource != null)
         {
-            audioSource.volume = Mathf.Clamp01(volume); // 0-1 arasýnda sýnýrla
+            audioSource.volume = volume;
+            Debug.Log($"Müzik ses seviyesi: {volume}");
         }
+    }
+
+    public void PauseMusic()
+    {
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            audioSource.Pause();
+            Debug.Log("Müzik durduruldu!");
+        }
+    }
+
+    public void PlayMusic()
+    {
+        if (audioSource != null && !audioSource.isPlaying)
+        {
+            audioSource.Play();
+            Debug.Log("Müzik çalýyor!");
+        }
+    }
+
+    public bool IsMusicPlaying()
+    {
+        return audioSource != null && audioSource.isPlaying;
     }
 }

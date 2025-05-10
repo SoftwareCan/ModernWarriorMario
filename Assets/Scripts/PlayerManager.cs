@@ -22,7 +22,7 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private HintDoorManager hintDoorManager;
     [SerializeField] private UIManager uiManager;
     [SerializeField] private Transform cameraTransform;
-    [SerializeField] private float fallThresholdY = -10f; // Yeni: Düþme sýnýrý
+    [SerializeField] private float fallThresholdY = -10f; // Düþme sýnýrý
 
     [SerializeField] private float attackRange = 2f;
     [SerializeField] private float attackDamage = 20f;
@@ -353,8 +353,17 @@ public class PlayerManager : MonoBehaviour
 
     private IEnumerator HandleDeathAnimation()
     {
-        yield return new WaitForSecondsRealtime(6f);
+        // Ölüm animasyonunun süresini al
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        float animationLength = stateInfo.length;
+        Debug.Log($"Ölüm animasyonu süresi: {animationLength} saniye");
+
+        // Animasyon tamamlanana kadar bekle
+        yield return new WaitForSecondsRealtime(animationLength);
+
+        // GameOver ekranýný göster
         uiManager.ShowGameOverScreen();
+        Debug.Log("Ölüm animasyonu bitti, GameOver ekraný gösterildi!");
     }
 
     public bool IsDead()
