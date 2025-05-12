@@ -16,13 +16,15 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button mainMenuButton;
-    [SerializeField] private Button musicToggleButton; // Buton
-    [SerializeField] private GameObject musicOnImage; // Açýk ses sprite’ý
-    [SerializeField] private GameObject musicOffImage; // Kapalý ses sprite’ý
+    [SerializeField] private Button musicToggleButton;
+    [SerializeField] private GameObject musicOnImage;
+    [SerializeField] private GameObject musicOffImage;
+    [SerializeField] private HintDoorManager hintDoorManager;
+
     private BackgroundMusicManager musicManager;
     private GoldManager goldManager;
     private int score;
-    private bool isMusicOn = true; // Müzik baþlangýçta açýk
+    private bool isMusicOn = true;
 
     private void Awake()
     {
@@ -30,7 +32,6 @@ public class UIManager : MonoBehaviour
         if (musicManager == null)
         {
             Debug.LogError("UIManager: BackgroundMusicManager bulunamadý!");
-            return;
         }
 
         goldManager = Object.FindFirstObjectByType<GoldManager>();
@@ -39,70 +40,9 @@ public class UIManager : MonoBehaviour
             Debug.LogError("UIManager: GoldManager bulunamadý!");
         }
 
-
-        if (playerHealth == null)
+        if (hintDoorManager == null)
         {
-            Debug.LogError("UIManager: PlayerHealth TextMeshProUGUI atanmamýþ!");
-            return;
-        }
-
-        if (goldText == null)
-        {
-            Debug.LogError("UIManager: GoldText TextMeshProUGUI atanmamýþ!");
-        }
-
-        if (scoreText == null)
-        {
-            Debug.LogError("UIManager: ScoreText TextMeshProUGUI atanmamýþ!");
-            return;
-        }
-
-        if (gameOverPanel == null)
-        {
-            Debug.LogError("UIManager: GameOverPanel atanmamýþ!");
-            return;
-        }
-
-        if (pauseButton == null)
-        {
-            Debug.LogError("UIManager: PauseButton atanmamýþ!");
-            return;
-        }
-
-        if (pausePanel == null)
-        {
-            Debug.LogError("UIManager: PausePanel atanmamýþ!");
-            return;
-        }
-
-        if (resumeButton == null)
-        {
-            Debug.LogError("UIManager: ResumeButton atanmamýþ!");
-            return;
-        }
-
-        if (mainMenuButton == null)
-        {
-            Debug.LogError("UIManager: MainMenuButton atanmamýþ!");
-            return;
-        }
-
-        if (musicToggleButton == null)
-        {
-            Debug.LogError("UIManager: MusicToggleButton atanmamýþ!");
-            return;
-        }
-
-        if (musicOnImage == null)
-        {
-            Debug.LogError("UIManager: MusicOnImage atanmamýþ!");
-            return;
-        }
-
-        if (musicOffImage == null)
-        {
-            Debug.LogError("UIManager: MusicOffImage atanmamýþ!");
-            return;
+            Debug.LogError("UIManager: HintDoorManager atanmamýþ!");
         }
     }
 
@@ -128,7 +68,6 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        
         gameOverPanel.SetActive(false);
         pausePanel.SetActive(false);
         pauseButton.onClick.AddListener(PauseGame);
@@ -151,6 +90,42 @@ public class UIManager : MonoBehaviour
         if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        CheckForKeyUsage();
+    }
+
+    private void CheckForKeyUsage()
+    {
+        if (hintDoorManager == null) return;
+
+        RectTransform dropAreaRect = hintDoorManager.GetKeyDropArea();
+        if (dropAreaRect == null) return;
+
+        InventoryUI inventoryUI = Object.FindFirstObjectByType<InventoryUI>();
+        if (inventoryUI == null) return;
+
+        GameObject inventoryPanel = inventoryUI.gameObject;
+        if (inventoryPanel == null || !inventoryPanel.activeSelf) return;
+
+        Item keyItem = System.Array.Find(Resources.FindObjectsOfTypeAll<Item>(), i => i.itemID == "Key1");
+        if (keyItem == null || !InventoryManager.Instance.HasItem(keyItem)) return;
+
+        Vector2 localPoint;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(dropAreaRect, Input.mousePosition, null, out localPoint))
+            return;
+
+        bool isInDropArea = dropAreaRect.rect.Contains(localPoint);
+        float distance = Vector2.Distance(Input.mousePosition, dropAreaRect.position);
+        bool isInDropAreaByDistance = distance < 50f; // Daha hassas mesafe  
+
+        if ((isInDropArea || isInDropAreaByDistance) && Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject())
+        {
+            if (InventoryManager.Instance.RemoveItem(keyItem))
+            {
+                hintDoorManager.ChangeColorAndOpenWay();
+                Debug.Log("Anahtar týklama ile kullanýldý, kapý açýldý!");
+            }
         }
     }
 

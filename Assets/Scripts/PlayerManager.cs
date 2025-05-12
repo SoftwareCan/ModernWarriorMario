@@ -27,6 +27,9 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private float attackRange = 2f;
     [SerializeField] private float attackDamage = 20f;
 
+    [SerializeField] private float keyPickupRange = 1f; //Anahtar alma menzili
+    [SerializeField] private LayerMask keyLayer; // Anahtar objelerinin Layerý
+
     public Animator animator;
 
     private int idleAnimID;
@@ -90,6 +93,26 @@ public class PlayerManager : MonoBehaviour
         }
 
         SetInputs();
+
+        if(Input.GetKeyDown(KeyCode.F))
+        {
+            TryPickupItem(); 
+        }
+    }
+
+    private void TryPickupItem()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, keyPickupRange, keyLayer);
+        foreach (var hit in hits)
+        {
+            PickupItem pickupItem = hit.GetComponent<PickupItem>();
+            if (pickupItem != null)
+            {
+                pickupItem.Pickup();
+                Debug.Log("Item alýndý!");
+                return;
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -290,15 +313,6 @@ public class PlayerManager : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (isDead) return;
-        if (collision.collider.CompareTag("HintDoor"))
-        {
-            hintDoorManager.ChangeColorAndOpenWay();
-        }
-    }
-
     public void TakeDamage(float damage)
     {
         if (isDead) return;
@@ -375,5 +389,7 @@ public class PlayerManager : MonoBehaviour
     {
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, keyPickupRange); // Anahtar alma menzilini görselleþtir
     }
 }

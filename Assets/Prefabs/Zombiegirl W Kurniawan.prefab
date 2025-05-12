@@ -1174,7 +1174,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &528159011107506002
 Transform:
   m_ObjectHideFlags: 0
@@ -1310,6 +1310,7 @@ MonoBehaviour:
   maxHealth: 100
   knockbackDistance: 0.5
   knockbackDuration: 0.2
+  activationDistance: 15
   healthBarSlider: {fileID: 3193913246068810675}
   healthBarTransform: {fileID: 8047883527108588860}
 --- !u!1 &4546254902794608442

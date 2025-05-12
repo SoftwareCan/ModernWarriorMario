@@ -1,20 +1,35 @@
-using System;
 using UnityEngine;
 
 public class HintDoorManager : MonoBehaviour
 {
-    [SerializeField] GameObject hintWay;
+    [SerializeField] private GameObject hintWay;
+    [SerializeField] private RectTransform keyDropArea;
 
-    void Start()
+    private void Start()
     {
-        hintWay.SetActive(false);
     }
+
     public void ChangeColorAndOpenWay()
     {
-        GetComponent<MeshRenderer>().material.color = Color.green;
-        GetComponent<Light>().color = Color.green;
+        Light light = GetComponent<Light>();
+
+        light.color = Color.green;
         hintWay.SetActive(true);
+        Debug.Log("Kapý açýldý: Renk yeþil, hintWay aktif!");
     }
 
-   
+    public RectTransform GetKeyDropArea()
+    {
+        if (keyDropArea == null)
+        {
+            Debug.LogError("GetKeyDropArea: keyDropArea null!");
+        }
+        return keyDropArea;
+    }
+
+    [ContextMenu("Test Open Door")]
+    public void TestOpenDoor()
+    {
+        ChangeColorAndOpenWay();
+    }
 }
