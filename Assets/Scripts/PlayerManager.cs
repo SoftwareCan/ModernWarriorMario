@@ -29,6 +29,8 @@ public class PlayerManager : MonoBehaviour
 
     [SerializeField] private float keyPickupRange = 1f; //Anahtar alma menzili
     [SerializeField] private LayerMask keyLayer; // Anahtar objelerinin Layerý
+    [SerializeField] private InventoryUI inventoryUI;
+    [SerializeField] private MarketUI marketUI;
 
     public Animator animator;
 
@@ -94,9 +96,22 @@ public class PlayerManager : MonoBehaviour
 
         SetInputs();
 
-        if(Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F))
         {
-            TryPickupItem(); 
+            TryPickupItem();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            inventoryUI.ToggleInventory();
+        }
+
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            if (marketUI != null)
+            {
+                marketUI.ToggleMarket();
+            }
         }
     }
 
@@ -304,7 +319,7 @@ public class PlayerManager : MonoBehaviour
             other.gameObject.SetActive(false);
             if (goldManager != null)
             {
-                goldManager.AddGold(10);
+                goldManager.AddGold(100);
             }
             else
             {

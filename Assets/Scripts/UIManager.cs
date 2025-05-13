@@ -201,7 +201,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void UpdateGoldText(int gold)
+    public void UpdateGoldText(int gold)
     {
         if (goldText != null)
         {

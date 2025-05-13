@@ -6,28 +6,30 @@ public class InventoryManager : MonoBehaviour
     [System.Serializable]
     public class InventorySlot
     {
-        public Item item; // Slot’taki item
-        public int quantity; // Item miktarý
+        public Item item;
+        public int quantity;
     }
 
     [SerializeField] private List<InventorySlot> slots = new List<InventorySlot>();
     [SerializeField] private int maxSlots = 16;
-
     private static InventoryManager instance;
 
     private void Awake()
     {
+        Debug.Log($"InventoryManager Awake: GameObject={gameObject.name}, Aktif={gameObject.activeInHierarchy}, Scene={gameObject.scene.name}");
         if (instance == null)
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+            Debug.Log("InventoryManager instance oluþturuldu.");
         }
         else
         {
+            Debug.Log("InventoryManager: Fazla instance, yok ediliyor.");
             Destroy(gameObject);
+            return; // Destroy sonrasý kod çalýþmasýn
         }
 
-        // Slotlarý baþlat
         for (int i = 0; i < maxSlots; i++)
         {
             slots.Add(new InventorySlot { item = null, quantity = 0 });
@@ -44,7 +46,6 @@ public class InventoryManager : MonoBehaviour
             return false;
         }
 
-        // Önce yýðýnlanabilir item’ý kontrol et
         if (item.isStackable)
         {
             foreach (var slot in slots)
@@ -59,13 +60,12 @@ public class InventoryManager : MonoBehaviour
                         AddItem(item, excess);
                     }
                     Debug.Log($"Item eklendi: {slot.item.itemName}, Miktar: {slot.quantity}");
-                    OnInventoryChanged?.Invoke(); // Null-safe event çaðrýsý
+                    OnInventoryChanged?.Invoke();
                     return true;
                 }
             }
         }
 
-        // Boþ slot ara
         foreach (var slot in slots)
         {
             if (slot.item == null)
@@ -73,7 +73,7 @@ public class InventoryManager : MonoBehaviour
                 slot.item = item;
                 slot.quantity = quantity;
                 Debug.Log($"Item eklendi: {item.itemName}, Miktar: {slot.quantity}");
-                OnInventoryChanged?.Invoke(); // Null-safe event çaðrýsý
+                OnInventoryChanged?.Invoke();
                 return true;
             }
         }

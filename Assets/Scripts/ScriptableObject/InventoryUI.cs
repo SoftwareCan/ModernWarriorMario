@@ -12,12 +12,26 @@ public class InventoryUI : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log("InventoryUI Awake baþladý.");
         inventoryManager = InventoryManager.Instance;
         if (inventoryManager == null)
         {
-            Debug.LogError("InventoryManager bulunamadý!");
-            return;
+            Debug.Log("InventoryManager.Instance null, sahnede aranýyor...");
+            inventoryManager = Object.FindFirstObjectByType<InventoryManager>();
+            if (inventoryManager == null)
+            {
+                Debug.LogError("InventoryManager bulunamadý! Lütfen sahneye InventoryManager objesi ekleyin.");
+            }
+            else
+            {
+                Debug.Log($"InventoryManager sahnede bulundu: {inventoryManager.gameObject.name}");
+            }
         }
+        else
+        {
+            Debug.Log($"InventoryManager bulundu: {inventoryManager.gameObject.name}");
+        }
+
         if (inventoryPanel == null)
         {
             Debug.LogError("InventoryPanel atanmamýþ!");

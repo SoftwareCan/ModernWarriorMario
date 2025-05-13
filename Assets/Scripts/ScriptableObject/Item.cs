@@ -8,6 +8,7 @@ public class Item : ScriptableObject
     public Sprite icon; // Itemin UI'dakli ikonu
     public bool isStackable; //Yýðýnlanabilir mi?
     public int maxStackSize; // Max yýðýn miktarý;
+    public int price; //Market için 
 
 
 }
