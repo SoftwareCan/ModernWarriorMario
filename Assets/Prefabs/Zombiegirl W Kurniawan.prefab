@@ -1302,9 +1302,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  stoppingDistance: 1.5
-  attackRange: 1.5
-  attackCoolDown: 2
+  stoppingDistance: 1.26
+  attackRange: 1.23
+  attackCoolDown: 1.2
   damage: 10
   moveSpeed: 2
   maxHealth: 100

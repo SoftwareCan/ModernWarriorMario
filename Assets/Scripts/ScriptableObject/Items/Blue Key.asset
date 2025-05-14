@@ -18,3 +18,4 @@ MonoBehaviour:
   isStackable: 1
   maxStackSize: 100
   price: 0
+  description: This key opens doors (can be used by dragging)

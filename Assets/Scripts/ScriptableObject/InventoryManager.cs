@@ -11,7 +11,7 @@ public class InventoryManager : MonoBehaviour
     }
 
     [SerializeField] private List<InventorySlot> slots = new List<InventorySlot>();
-    [SerializeField] private int maxSlots = 16;
+    [SerializeField] private int maxSlots = 24;
     private static InventoryManager instance;
 
     private void Awake()

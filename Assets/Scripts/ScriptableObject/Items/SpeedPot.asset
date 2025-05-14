@@ -18,3 +18,4 @@ MonoBehaviour:
   isStackable: 1
   maxStackSize: 100
   price: 50
+  description: Increases speed for 20 seconds (works with double click)

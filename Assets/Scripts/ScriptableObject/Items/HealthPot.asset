@@ -18,3 +18,4 @@ MonoBehaviour:
   isStackable: 1
   maxStackSize: 100
   price: 100
+  description: Increases health by 100 (works with double click)

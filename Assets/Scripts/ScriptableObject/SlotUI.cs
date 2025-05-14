@@ -14,16 +14,36 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     private void Awake()
     {
+        Debug.Log($"SlotUI Awake: GameObject={gameObject.name}");
         inventoryManager = InventoryManager.Instance;
         if (inventoryManager == null)
         {
-            Debug.LogError("SlotUI: InventoryManager bulunamadý!");
+            Debug.Log("SlotUI: InventoryManager.Instance null, sahnede aranýyor...");
+            inventoryManager = Object.FindFirstObjectByType<InventoryManager>();
+            if (inventoryManager == null)
+            {
+                Debug.LogError("SlotUI: InventoryManager bulunamadý! Lütfen sahneye InventoryManager objesi ekleyin.");
+            }
+            else
+            {
+                Debug.Log($"SlotUI: InventoryManager sahnede bulundu: {inventoryManager.gameObject.name}");
+            }
         }
-        icon = transform.Find("Icon")?.GetComponent<Image>();
-        if (icon == null)
+
+        var iconObj = transform.Find("Icon");
+        if (iconObj != null)
         {
-            Debug.LogError("SlotUI: Icon Image bulunamadý!");
+            icon = iconObj.GetComponent<Image>();
+            if (icon == null)
+            {
+                Debug.LogError($"SlotUI: Icon objesi var ama Image komponenti bulunamadý! GameObject={gameObject.name}");
+            }
         }
+        else
+        {
+            Debug.LogError($"SlotUI: Icon objesi bulunamadý! GameObject={gameObject.name}");
+        }
+
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
@@ -47,6 +67,8 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
                 icon.gameObject.SetActive(false);
             }
         }
+
+
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -59,7 +81,7 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
         originalParent = transform.parent;
         originalPosition = transform.position;
-        transform.SetParent(transform.root); // Canvas’ýn köküne taþý
+        transform.SetParent(transform.root);
         canvasGroup.blocksRaycasts = false;
         Debug.Log($"Sürükleme baþladý: {item.itemName}");
     }
@@ -67,7 +89,6 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     public void OnDrag(PointerEventData eventData)
     {
         if (item == null) return;
-
         transform.position = eventData.position;
     }
 
@@ -75,13 +96,11 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     {
         if (item == null) return;
 
-        // Orijinal parent ve pozisyona geri dön
         transform.SetParent(originalParent);
-        transform.SetSiblingIndex(slotIndex); // Doðru sýrayý koru
+        transform.SetSiblingIndex(slotIndex);
         transform.position = originalPosition;
         canvasGroup.blocksRaycasts = true;
 
-        // HintDoorManager’ý bul
         HintDoorManager hintDoorManager = Object.FindFirstObjectByType<HintDoorManager>();
         if (hintDoorManager == null)
         {
@@ -96,17 +115,14 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
             return;
         }
 
-        // Canvas ve kamera ayarý
         Canvas canvas = dropArea.GetComponentInParent<Canvas>();
         if (canvas == null)
         {
-            Debug.LogError("OnEndDrag: Canvas bulunamadý! dropArea’nýn bir Canvas parent’ý olmalý.");
+            Debug.LogError("OnEndDrag: Canvas bulunamadý!");
             return;
         }
 
-        Camera eventCamera = canvas.worldCamera; // WorldSpace için World Camera’yý kullan
-        
-
+        Camera eventCamera = canvas.worldCamera;
         Vector2 localPoint;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(dropArea, eventData.position, eventCamera, out localPoint))
         {
@@ -115,7 +131,7 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
                 if (inventoryManager != null && inventoryManager.RemoveItem(item))
                 {
                     hintDoorManager.ChangeColorAndOpenWay();
-                    
+                    Debug.Log($"Anahtar kullanýldý: {item.itemName}");
                 }
                 else
                 {
@@ -124,12 +140,12 @@ public class SlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
             }
             else
             {
-                Debug.Log("Anahtar keyDropArea’ya býrakýlmadý. LocalPoint: " + localPoint + ", Rect: " + dropArea.rect);
+                Debug.Log($"Anahtar keyDropArea’ya býrakýlmadý. LocalPoint: {localPoint}, Rect: {dropArea.rect}");
             }
         }
         else
         {
-            Debug.LogWarning("ScreenPointToLocalPointInRectangle baþarýsýz! Position: " + eventData.position + ", DropArea: " + dropArea.rect + ", Camera: " + eventCamera.name);
+            Debug.LogWarning($"ScreenPointToLocalPointInRectangle baþarýsýz! Position: {eventData.position}, DropArea: {dropArea.rect}, Camera: {eventCamera.name}");
         }
     }
 }

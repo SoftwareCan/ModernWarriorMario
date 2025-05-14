@@ -8,7 +8,7 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float forwardSmoothSpeed = 5f; // Artırıldı
     [SerializeField] private float heightOffset = 2.5f;
     [SerializeField] private float distanceOffset = 3.5f;
-    [SerializeField] private float tiltAngle = -15f;
+    [SerializeField] private float tiltAngle = 15f;
 
     // Yakınlaşma/uzaklaşma
     [SerializeField] private float minDistance = 3f; // 2f → 3f, görüş açısı için
