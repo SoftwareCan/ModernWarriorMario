@@ -9,7 +9,7 @@ public class Item : ScriptableObject
     public bool isStackable; //Yýðýnlanabilir mi?
     public int maxStackSize; // Max yýðýn miktarý;
     public int price; //Market için 
-    [TextArea] public string description;   //  Tooltip açýklamasý
-    
+    public string description; //Açýklama
+
 
 }
